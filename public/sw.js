@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fifaverse-ai-cache-v1';
+const CACHE_NAME = 'fifaverse-ai-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate Service Worker
+// Activate Service Worker - Cleans up old stale cache versions
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -40,6 +40,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-First strategy for HTML/Document navigation to ensure fresh bundle loads
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match('./index.html') || caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache-First strategy for assets (JS, CSS, images) which have unique hashes
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -47,12 +66,10 @@ self.addEventListener('fetch', (event) => {
       }
       
       return fetch(event.request).then((response) => {
-        // Check for valid response
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
 
-        // Cache newly requested asset dynamically
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
@@ -60,8 +77,10 @@ self.addEventListener('fetch', (event) => {
 
         return response;
       }).catch(() => {
-        // Offline fallback if fetch fails
-        return caches.match('./index.html');
+        // Assets fallback
+        if (event.request.url.endsWith('.js') || event.request.url.endsWith('.css')) {
+          return new Response('', { status: 408, statusText: 'Network request failed' });
+        }
       });
     })
   );
