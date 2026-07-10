@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import GlobeCanvas from '../components/common/GlobeCanvas';
@@ -16,12 +16,16 @@ import {
   CheckCircle,
   Database,
   MapPin,
-  HeartHandshake
+  HeartHandshake,
+  Calendar,
+  CloudSun
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { MATCH_SCHEDULE, WORLD_CUP_WEATHER } from '../constants/stadiumData';
 
 const Home: React.FC = () => {
   const { t } = useApp();
+  const [selectedWeatherCity, setSelectedWeatherCity] = useState<number>(0);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -178,6 +182,99 @@ const Home: React.FC = () => {
               </GlassCard>
             );
           })}
+        </div>
+      </motion.section>
+
+      {/* Real-time World Cup Operations Widgets */}
+      <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-8">
+        {/* Live Check-In Capacity Widget */}
+        <div className="md:col-span-4 glass-panel rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
+          <h3 className="text-xs font-black tracking-wider uppercase text-slate-400 mb-4 flex items-center gap-1.5">
+            <Users className="h-4 w-4 text-fifa-teal" />
+            Live Check-In Capacity
+          </h3>
+          <div className="flex flex-col items-center justify-center flex-grow py-2">
+            <div className="relative h-24 w-24 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="transparent" />
+                <circle cx="48" cy="48" r="40" stroke="#00F2FE" strokeWidth="6" fill="transparent"
+                  strokeDasharray={2 * Math.PI * 40}
+                  strokeDashoffset={2 * Math.PI * 40 * (1 - 68450 / 75000)}
+                  strokeLinecap="round" />
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-lg font-black text-white">91.2%</span>
+                <span className="text-[9px] text-slate-400 font-bold uppercase">Checked In</span>
+              </div>
+            </div>
+            <div className="mt-3 text-center text-xs text-slate-300">
+              <p className="font-bold">68,450 / 75,000 Spectators</p>
+              <p className="text-[9px] text-fifa-teal mt-0.5 font-semibold">Peak attendance expected in 15 mins</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Real-time Weather Widget */}
+        <div className="md:col-span-4 glass-panel rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-black tracking-wider uppercase text-slate-400 flex items-center gap-1.5">
+                <CloudSun className="h-4 w-4 text-fifa-gold" />
+                Stadium Weather
+              </h3>
+              <span className="text-[9px] rounded bg-fifa-blue/15 border border-fifa-blue/30 px-1.5 py-0.5 text-fifa-blue font-bold">Real-time</span>
+            </div>
+            <select
+              onChange={(e) => setSelectedWeatherCity(Number(e.target.value))}
+              value={selectedWeatherCity}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-200 focus:outline-none focus:border-fifa-teal mb-4"
+            >
+              {WORLD_CUP_WEATHER.map((w, idx) => (
+                <option key={idx} value={idx} className="bg-fifa-dark text-slate-200">
+                  {w.city}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl font-black text-white">{WORLD_CUP_WEATHER[selectedWeatherCity].temp}</span>
+              <span className="text-xs font-bold text-fifa-teal bg-fifa-teal/15 px-2.5 py-1 rounded-full border border-fifa-teal/20">
+                {WORLD_CUP_WEATHER[selectedWeatherCity].cond}
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3 text-[10px] text-slate-400 font-medium">
+            <div>Wind: <span className="text-slate-200 font-bold">{WORLD_CUP_WEATHER[selectedWeatherCity].wind}</span></div>
+            <div>Humidity: <span className="text-slate-200 font-bold">{WORLD_CUP_WEATHER[selectedWeatherCity].hum}</span></div>
+          </div>
+        </div>
+
+        {/* Match Schedule Widget */}
+        <div className="md:col-span-4 glass-panel rounded-2xl p-6 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-black tracking-wider uppercase text-slate-400 flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 text-fifa-pink" />
+              Match Schedule
+            </h3>
+            <span className="h-2 w-2 rounded-full bg-fifa-red animate-pulse" />
+          </div>
+          <div className="space-y-2 flex-grow overflow-y-auto max-h-[120px] pr-1">
+            {MATCH_SCHEDULE.map((match) => (
+              <div key={match.id} className="flex items-center justify-between text-[11px] border-b border-white/5 pb-2 last:border-b-0 last:pb-0">
+                <div className="flex flex-col">
+                  <span className="font-bold text-slate-200">{match.teams}</span>
+                  <span className="text-[9px] text-slate-400">{match.time}</span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
+                    match.status === 'live' ? 'bg-fifa-red/10 text-fifa-red border border-fifa-red/30' : 'bg-white/5 text-slate-400'
+                  }`}>
+                    {match.status}
+                  </span>
+                  <span className="text-[8px] text-slate-500 font-semibold mt-0.5">{match.gate}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </motion.section>
 

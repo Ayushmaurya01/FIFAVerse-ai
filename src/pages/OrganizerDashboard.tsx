@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { getOrganizerStats, getEmergencyAlerts, getVolunteerTasks } from '../services/dataService';
+import { getOrganizerStats, getEmergencyAlerts, getVolunteerTasks, addVolunteerTask, resolveEmergencyAlert } from '../services/dataService';
 import type { EmergencyAlert, VolunteerTask } from '../services/dataService';
 import { getGeminiResponse } from '../services/gemini';
 import GlassCard from '../components/common/GlassCard';
@@ -14,7 +14,8 @@ import {
   Sparkles, 
   RefreshCw,
   AlertTriangle,
-  Car
+  Car,
+  CheckCircle
 } from 'lucide-react';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
@@ -41,6 +42,36 @@ const OrganizerDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [aiSuggestions, setAiSuggestions] = useState<string>('');
   const [runningAI, setRunningAI] = useState<boolean>(false);
+
+  // Task creator states
+  const [newTaskTitle, setNewTaskTitle] = useState<string>('');
+  const [newTaskDesc, setNewTaskDesc] = useState<string>('');
+  const [newTaskLoc, setNewTaskLoc] = useState<string>('Gate 4 Concourse');
+  const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
+  const [taskCreatedMsg, setTaskCreatedMsg] = useState<boolean>(false);
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newTaskTitle.trim() && newTaskDesc.trim()) {
+      await addVolunteerTask({
+        title: newTaskTitle,
+        description: newTaskDesc,
+        location: newTaskLoc,
+        priority: newTaskPriority,
+        status: 'pending'
+      });
+      setNewTaskTitle('');
+      setNewTaskDesc('');
+      setTaskCreatedMsg(true);
+      setTimeout(() => setTaskCreatedMsg(false), 3000);
+      loadData();
+    }
+  };
+
+  const handleResolveAlert = async (id: string) => {
+    await resolveEmergencyAlert(id);
+    loadData();
+  };
 
   useEffect(() => {
     // If user is not organizer, we simulate logging them in as Organizer for evaluation ease!
@@ -269,6 +300,40 @@ const OrganizerDashboard: React.FC = () => {
               </div>
             </GlassCard>
 
+            {/* Energy Monitor Panel */}
+            <GlassCard hoverEffect={false} className="border-white/5 space-y-4">
+              <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Zap className="h-4 w-4 text-fifa-gold" />
+                <span>Venue Smart Energy Monitor</span>
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Current Demand</span>
+                  <span className="text-sm font-black text-white">{stats.energyUsage.currentKw} kW</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Solar Generation</span>
+                  <span className="text-sm font-black text-fifa-teal">1,820 kW</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Storage reserves</span>
+                  <span className="text-sm font-black text-fifa-green">450 kWh</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Smart Grid feed</span>
+                  <span className="text-sm font-black text-fifa-pink">170 kW</span>
+                </div>
+              </div>
+              
+              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-fifa-teal rounded-full" style={{ width: `${stats.energyUsage.renewablesPercentage}%` }} />
+              </div>
+              <span className="text-[9px] text-slate-500 font-bold block text-center">
+                Renewable energy supplies {stats.energyUsage.renewablesPercentage}% of current stadium load.
+              </span>
+            </GlassCard>
+
             {/* Environmental Impact bar */}
             <GlassCard hoverEffect={false} className="border-white/5 flex flex-col justify-between p-5">
               <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-2">
@@ -339,24 +404,89 @@ const OrganizerDashboard: React.FC = () => {
             </button>
           </GlassCard>
 
-          {/* Active Security alerts display */}
+          {/* Active Security alerts display with Claim/Resolve Actions */}
           <GlassCard hoverEffect={false} className="border-white/5 space-y-3 bg-red-950/5">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Security Command Alert Logs</span>
-            <div className="space-y-2 max-h-[150px] overflow-y-auto">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Security Command Incident Dispatch</span>
+            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
               {alerts.length === 0 ? (
-                <div className="text-xs text-slate-500 italic">No active alarms. Stadium is secure.</div>
+                <div className="text-xs text-slate-500 italic">No active alerts. Venue status secure.</div>
               ) : (
                 alerts.map((a) => (
-                  <div key={a.id} className="flex gap-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-[10px] text-red-300 leading-normal">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 animate-bounce" />
-                    <div>
-                      <span className="font-bold block capitalize">{a.type} incident - {a.location}</span>
-                      <span>{a.details}</span>
+                  <div key={a.id} className="flex flex-col gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] text-red-300 leading-normal">
+                    <div className="flex gap-2 items-start">
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 animate-bounce" />
+                      <div>
+                        <span className="font-bold block capitalize">{a.type} incident - {a.location}</span>
+                        <span className="font-medium text-slate-300">{a.details}</span>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleResolveAlert(a.id)}
+                      className="self-end px-3 py-1 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 text-[9px] font-black uppercase transition-all cursor-pointer"
+                    >
+                      Resolve Alert
+                    </button>
                   </div>
                 ))
               )}
             </div>
+          </GlassCard>
+
+          {/* Dispatch/Create Volunteer Tasks Form */}
+          <GlassCard glowColor="none" className="border-white/5 space-y-4">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-white/5 pb-2">
+              <HeartHandshake className="h-4.5 w-4.5 text-fifa-pink" />
+              <span>Dispatch Volunteer Task</span>
+            </h3>
+            <form onSubmit={handleCreateTask} className="space-y-3">
+              <input
+                type="text"
+                required
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-fifa-teal"
+                placeholder="Task Title (e.g. Replenish Water Station)..."
+              />
+              <textarea
+                required
+                value={newTaskDesc}
+                onChange={(e) => setNewTaskDesc(e.target.value)}
+                rows={2}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-fifa-teal resize-none"
+                placeholder="Detailed instructions for volunteers..."
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  required
+                  value={newTaskLoc}
+                  onChange={(e) => setNewTaskLoc(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-fifa-teal"
+                  placeholder="Location (e.g. Sect 102)..."
+                />
+                <select
+                  value={newTaskPriority}
+                  onChange={(e: any) => setNewTaskPriority(e.target.value)}
+                  className="w-full bg-fifa-purple border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-fifa-teal cursor-pointer"
+                >
+                  <option value="low">Low Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="high">High Priority</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2 bg-fifa-teal/10 hover:bg-fifa-teal/20 text-fifa-teal border border-fifa-teal/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                Deploy Task to Field
+              </button>
+            </form>
+            {taskCreatedMsg && (
+              <p className="text-[10px] text-fifa-green font-bold flex items-center gap-1 animate-pulse">
+                <CheckCircle className="h-3.5 w-3.5" /> Task successfully deployed to volunteer boards!
+              </p>
+            )}
           </GlassCard>
         </div>
 

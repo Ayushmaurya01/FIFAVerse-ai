@@ -4,7 +4,7 @@ import { getVolunteerTasks, updateTaskStatus } from '../services/dataService';
 import type { VolunteerTask } from '../services/dataService';
 import { getGeminiResponse } from '../services/gemini';
 import GlassCard from '../components/common/GlassCard';
-import { HeartHandshake, Key, Sparkles, Send, CheckCircle, RefreshCw, AlertCircle, Bookmark } from 'lucide-react';
+import { HeartHandshake, Key, Sparkles, Send, CheckCircle, RefreshCw, AlertCircle, Bookmark, Calendar, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const VolunteerPortal: React.FC = () => {
@@ -13,6 +13,21 @@ const VolunteerPortal: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [sector, setSector] = useState<string>('East Concourse');
   const [loadingTasks, setLoadingTasks] = useState<boolean>(false);
+
+  // Lost & Found states
+  const [lfItem, setLfItem] = useState<string>('');
+  const [lfLocation, setLfLocation] = useState<string>('');
+  const [lfLogged, setLfLogged] = useState<boolean>(false);
+
+  const handleLogLostFound = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (lfItem.trim() && lfLocation.trim()) {
+      setLfLogged(true);
+      setLfItem('');
+      setLfLocation('');
+      setTimeout(() => setLfLogged(false), 3000);
+    }
+  };
 
   // Copilot Chat
   const [copilotInput, setCopilotInput] = useState<string>('');
@@ -230,6 +245,37 @@ const VolunteerPortal: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Volunteer Shift Schedule */}
+            <GlassCard hoverEffect={false} className="border-white/5 space-y-4">
+              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <Calendar className="h-4.5 w-4.5 text-fifa-teal" />
+                <span>Your Assigned Shifts</span>
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400 font-bold">
+                      <th className="py-2">Date</th>
+                      <th className="py-2">Duty Shift</th>
+                      <th className="py-2">Sector</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-slate-300 font-medium">
+                    <tr className="border-b border-white/5">
+                      <td className="py-2.5">July 11, 2026</td>
+                      <td className="py-2.5">14:00 - 18:00</td>
+                      <td className="py-2.5">East Gate C</td>
+                    </tr>
+                    <tr className="border-b border-white/5">
+                      <td className="py-2.5">July 13, 2026</td>
+                      <td className="py-2.5">17:00 - 21:00</td>
+                      <td className="py-2.5">Sector 4 Stand</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </GlassCard>
           </div>
 
           {/* Volunteer AI Copilot Console */}
@@ -309,6 +355,45 @@ const VolunteerPortal: React.FC = () => {
                   Always prioritize guest physical safety. In case of fire or active threat, immediately direct crowds to designated exits and notify Sector Supervisor.
                 </span>
               </div>
+            </GlassCard>
+
+            {/* Lost & Found Logger */}
+            <GlassCard glowColor="none" className="border-white/5 space-y-4">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-white/5 pb-2">
+                <Search className="h-4.5 w-4.5 text-fifa-pink" />
+                <span>Lost & Found Log System</span>
+              </h3>
+              <form onSubmit={handleLogLostFound} className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={lfItem}
+                    onChange={(e) => setLfItem(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-fifa-pink"
+                    placeholder="Found Item..."
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={lfLocation}
+                    onChange={(e) => setLfLocation(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-fifa-pink"
+                    placeholder="Found Location..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-fifa-pink/10 hover:bg-fifa-pink/20 text-fifa-pink border border-fifa-pink/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  Log Item to Database
+                </button>
+              </form>
+              {lfLogged && (
+                <p className="text-[10px] text-fifa-green font-bold flex items-center gap-1 animate-pulse">
+                  <CheckCircle className="h-3.5 w-3.5" /> Item logged to central lost & found database!
+                </p>
+              )}
             </GlassCard>
 
             <button

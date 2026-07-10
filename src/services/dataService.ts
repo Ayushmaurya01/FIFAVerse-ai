@@ -1,4 +1,4 @@
-import { db, isFirebaseConfigured } from '../firebase/config';
+import { db, isFirebaseConfigured } from './firebase';
 import { 
   collection, 
   addDoc, 

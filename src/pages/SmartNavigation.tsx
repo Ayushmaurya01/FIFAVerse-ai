@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { getGeminiResponse } from '../services/gemini';
 import GlassCard from '../components/common/GlassCard';
-import { Search, Navigation, AlertCircle, Compass, Accessibility, Activity, Zap, Volume2 } from 'lucide-react';
+import { Search, Navigation, AlertCircle, Compass, Accessibility, Activity, Zap, Volume2, QrCode, HeartPulse, Droplet } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface DestinationOption {
@@ -37,6 +37,39 @@ const SmartNavigation: React.FC = () => {
   const [routeType, setRouteType] = useState<'best' | 'fastest' | 'wheelchair' | 'low_crowd'>('best');
   const [loading, setLoading] = useState<boolean>(false);
   const [aiAdvice, setAiAdvice] = useState<string>('');
+  
+  const [qrScanning, setQrScanning] = useState<boolean>(false);
+  const [showWaterStations, setShowWaterStations] = useState<boolean>(false);
+
+  const handleStartQrScan = () => {
+    setQrScanning(true);
+    setTimeout(() => {
+      setQrScanning(false);
+      setStartPoint('gate-b');
+      setEndPoint('sec-204');
+      setRouteType('best');
+      setAiAdvice(`🎫 Ticket QR Scanned Successfully!
+Section: 204
+Row: 12
+Seat: 4
+
+AI Route configured from Gate B (East) to Section 204. Step-free routing and elevator options are highlighted on the map.`);
+    }, 2000);
+  };
+
+  const handleFindNearestMedical = () => {
+    setStartPoint('gate-a');
+    setEndPoint('medical-s2');
+    setRouteType('fastest');
+    setAiAdvice(`🚨 Emergency Medical Route Selected:
+Destination: Medical Station B (AED) in Sector 2 (near Section 108).
+Path: Take the outer ring walkway for Section 106, bypass food stalls, enter first-aid suite on Concourse Level 1.
+First-aid responders have been alerted.`);
+  };
+
+  const handleToggleWaterStations = () => {
+    setShowWaterStations(!showWaterStations);
+  };
   
   // Custom SVG map coordinates mapping for routes drawing
   // Coordinates are on a 500x500 box representing the stadium
@@ -257,6 +290,57 @@ const SmartNavigation: React.FC = () => {
             </button>
           </GlassCard>
 
+          {/* QR Scanner & Smart Assist Card */}
+          <GlassCard glowColor="pink" className="space-y-4">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-white/5 pb-2">
+              <QrCode className="h-4.5 w-4.5 text-fifa-pink" />
+              <span>Smart Ticket Assistant</span>
+            </h3>
+            
+            {qrScanning ? (
+              <div className="relative h-40 bg-black/40 border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-fifa-pink shadow-lg shadow-fifa-pink animate-[bounce_2s_infinite]" />
+                <div className="h-20 w-20 border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center">
+                  <QrCode className="h-8 w-8 text-white/40 animate-pulse" />
+                </div>
+                <p className="text-[10px] text-slate-400 font-medium mt-3 animate-pulse">Scanning Ticket QR Code...</p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStartQrScan}
+                className="w-full py-2.5 rounded-xl border border-fifa-pink/35 bg-fifa-pink/10 hover:bg-fifa-pink/20 text-fifa-pink font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <QrCode className="h-4 w-4" />
+                Scan Ticket QR Code
+              </button>
+            )}
+
+            {/* Quick Locator Buttons */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleFindNearestMedical}
+                className="py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-red-500/10 hover:border-red-500/30 text-slate-200 hover:text-red-400 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <HeartPulse className="h-3.5 w-3.5 text-red-500" />
+                Medical Station
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleWaterStations}
+                className={`py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  showWaterStations
+                    ? 'bg-fifa-teal/20 border-fifa-teal text-fifa-teal'
+                    : 'border-white/10 bg-white/5 text-slate-200 hover:bg-fifa-teal/10 hover:text-fifa-teal'
+                }`}
+              >
+                <Droplet className="h-3.5 w-3.5 text-fifa-teal" />
+                Water Refill {showWaterStations ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </GlassCard>
+
           {/* AI Result Card */}
           {aiAdvice && (
             <motion.div
@@ -350,6 +434,19 @@ const SmartNavigation: React.FC = () => {
                 <path d="M 377 270 L 383 270 M 380 267 L 380 273" stroke="#FF1744" strokeWidth="2" />
                 <circle cx="380" cy="270" r="6" fill="none" stroke="#FF1744" strokeWidth="1" />
                 <text x="380" y="282" textAnchor="middle" fill="#FF1744" fontSize="7" fontWeight="bold">Medical</text>
+
+                {/* Water Refill Stations (Sustainability Feature) */}
+                {showWaterStations && (
+                  <>
+                    <circle cx="160" cy="150" r="7" fill="#120A2A" stroke="#00F2FE" strokeWidth="1.5" />
+                    <circle cx="160" cy="150" r="2.5" fill="#00F2FE" />
+                    <text x="160" y="142" textAnchor="middle" fill="#00F2FE" fontSize="8" fontWeight="bold">H2O</text>
+                    
+                    <circle cx="340" cy="350" r="7" fill="#120A2A" stroke="#00F2FE" strokeWidth="1.5" />
+                    <circle cx="340" cy="350" r="2.5" fill="#00F2FE" />
+                    <text x="340" y="342" textAnchor="middle" fill="#00F2FE" fontSize="8" fontWeight="bold">H2O</text>
+                  </>
+                )}
 
                 {/* Route drawing overlay when points differ */}
                 {startPoint !== endPoint && (

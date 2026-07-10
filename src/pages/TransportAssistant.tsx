@@ -27,6 +27,20 @@ const TRANSPORT_OPTIONS: TransportOption[] = [
   { id: 'shuttle-p', name: 'Outer Parking Lot C Shuttle', type: 'shuttle', etaMinutes: 15, trafficDelay: 'low', cost: 0.00, crowdLevel: 'medium', co2Emissions: 0.1, co2Saved: 0.9, distanceKm: 3 },
 ];
 
+const PARKING_LOTS = [
+  { name: 'Lot A (VIP / Media)', percentage: 88, status: 'Full' },
+  { name: 'Lot B (General West)', percentage: 65, status: 'Filling' },
+  { name: 'Lot C (General East)', percentage: 95, status: 'Full' },
+  { name: 'Lot D (Shuttle Lot)', percentage: 32, status: 'Available' },
+];
+
+const LIVE_TRANSIT_STATUS = [
+  { line: 'Metro Line 1 (North)', arrival: '2 mins', status: 'On Time' },
+  { line: 'Metro Line 1 (South)', arrival: '7 mins', status: 'Delayed (3m)' },
+  { line: 'Downtown Shuttle Bus', arrival: '4 mins', status: 'On Time' },
+  { line: 'Airport Express Bus', arrival: '11 mins', status: 'On Time' },
+];
+
 const TransportAssistant: React.FC = () => {
   const { addSustainabilityPoints, t } = useApp();
   const [destination, setDestination] = useState<string>('Downtown Hub');
@@ -152,6 +166,51 @@ const TransportAssistant: React.FC = () => {
               </GlassCard>
             </motion.div>
           )}
+
+          {/* Real-time Parking & Transit Status */}
+          <GlassCard glowColor="none" className="border-white/5 space-y-4">
+            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <Car className="h-4.5 w-4.5 text-fifa-gold" />
+              <span>Real-Time Operations</span>
+            </h3>
+
+            {/* Parking Occupancy Section */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Parking Occupancy</span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {PARKING_LOTS.map((lot, idx) => (
+                  <div key={idx} className="p-2 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-between">
+                    <span className="font-semibold text-slate-300 truncate">{lot.name}</span>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-sm font-black text-white">{lot.percentage}%</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        lot.status === 'Full' ? 'bg-red-500/10 text-red-400' : lot.status === 'Filling' ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
+                      }`}>{lot.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Public Transport Live Departures */}
+            <div className="space-y-2 border-t border-white/5 pt-3">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Live Transit Departures</span>
+              <div className="space-y-1.5">
+                {LIVE_TRANSIT_STATUS.map((tr, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-xs p-1.5 rounded-lg bg-fifa-darker/40 border border-white/5">
+                    <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                      <Train className="h-3.5 w-3.5 text-fifa-teal" />
+                      {tr.line}
+                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-fifa-teal font-black text-[11px]">{tr.arrival}</span>
+                      <span className="text-[9px] text-slate-500 font-bold">{tr.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </GlassCard>
         </div>
 
         {/* Right Side: Options Comparison */}

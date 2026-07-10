@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@layer base {
+  body {
+    @apply bg-fifa-dark text-slate-100 font-sans antialiased overflow-x-hidden;
+    background-image: radial-gradient(circle at 50% 0%, #170C3A 0%, #07020E 80%);
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #07020E;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1F1545;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #31216B;
+  }
+}
+
+/* Glassmorphism Styles (Optimized without performance-heavy blurs on repeating cards) */
+.glass-panel {
+  background: rgba(14, 8, 33, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover {
+  @apply transition-all duration-300;
+}
+.glass-panel-hover:hover {
+  background: rgba(22, 13, 50, 0.95);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Glowing Border System */
+.shadow-neon-blue {
+  box-shadow: 0 0 15px rgba(66, 133, 244, 0.25);
+}
+.shadow-neon-pink {
+  box-shadow: 0 0 15px rgba(236, 72, 153, 0.25);
+}
+.shadow-neon-teal {
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+}
+.shadow-neon-gold {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+/* Animations */
+@keyframes pulse-red {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(225, 29, 72, 0.6);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 4px rgba(225, 29, 72, 0.2);
+  }
+}
+.pulse-glow-red {
+  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Heatmap keyframe animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* High Contrast Mode Adjustments */
+.accessibility-active .glass-panel {
+  background: rgba(0, 0, 0, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+.accessibility-active a, 
+.accessibility-active button {
+  text-decoration: underline;
+}
+.accessibility-active button:focus, 
+.accessibility-active a:focus {
+  outline: 3px solid #00F2FE !important;
+  outline-offset: 2px !important;
+}

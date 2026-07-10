@@ -66,6 +66,36 @@ const GATE_WAIT_TIMES = {
   ]
 };
 
+const RESTROOM_WAIT_TIMES = {
+  pre_match: [
+    { name: 'North Concourse WC', minutes: 2, status: 'Low' },
+    { name: 'South Concourse WC', minutes: 3, status: 'Low' },
+  ],
+  halftime: [
+    { name: 'North Concourse WC', minutes: 14, status: 'Critical' },
+    { name: 'South Concourse WC', minutes: 12, status: 'High' },
+  ],
+  post_match: [
+    { name: 'North Concourse WC', minutes: 1, status: 'Low' },
+    { name: 'South Concourse WC', minutes: 1, status: 'Low' },
+  ]
+};
+
+const FOOD_WAIT_TIMES = {
+  pre_match: [
+    { name: 'Main Food Plaza', minutes: 5, status: 'Low' },
+    { name: 'West Concourse Stalls', minutes: 3, status: 'Low' },
+  ],
+  halftime: [
+    { name: 'Main Food Plaza', minutes: 16, status: 'Critical' },
+    { name: 'West Concourse Stalls', minutes: 10, status: 'High' },
+  ],
+  post_match: [
+    { name: 'Main Food Plaza', minutes: 2, status: 'Low' },
+    { name: 'West Concourse Stalls', minutes: 1, status: 'Low' },
+  ]
+};
+
 const CrowdIntelligence: React.FC = () => {
   const { t } = useApp();
   const [phase, setPhase] = useState<MatchPhase>('pre_match');
@@ -213,6 +243,60 @@ const CrowdIntelligence: React.FC = () => {
             <div className="flex justify-between items-center text-[10px] text-slate-400 font-semibold uppercase">
               <span>Avg Delay: {GATE_WAIT_TIMES[phase].reduce((acc, curr) => acc + curr.minutes, 0) / 4} mins</span>
               <span>Metric: Scan Wait times</span>
+            </div>
+          </GlassCard>
+
+          {/* Concourse Queue Predictions */}
+          <GlassCard hoverEffect={false} className="border-white/5 space-y-4">
+            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <Clock className="h-4.5 w-4.5 text-fifa-teal" />
+              <span>Concourse Queue Predictions</span>
+            </h3>
+            
+            <div className="space-y-4">
+              {/* Restrooms section */}
+              <div>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">WC Restroom Queues</span>
+                <div className="space-y-2 mt-2">
+                  {RESTROOM_WAIT_TIMES[phase].map((wc, idx) => (
+                    <div key={idx} className="text-xs">
+                      <div className="flex justify-between font-bold text-slate-200 mb-1">
+                        <span>{wc.name}</span>
+                        <span className={wc.status === 'Critical' ? 'text-fifa-red animate-pulse' : wc.status === 'High' ? 'text-fifa-gold' : 'text-fifa-teal'}>
+                          {wc.minutes}m ({wc.status})
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${
+                          wc.status === 'Critical' ? 'bg-fifa-red' : wc.status === 'High' ? 'bg-fifa-gold' : 'bg-fifa-teal'
+                        }`} style={{ width: `${Math.min(100, (wc.minutes / 15) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Food Concessions section */}
+              <div>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Food Court Concessions</span>
+                <div className="space-y-2 mt-2">
+                  {FOOD_WAIT_TIMES[phase].map((food, idx) => (
+                    <div key={idx} className="text-xs">
+                      <div className="flex justify-between font-bold text-slate-200 mb-1">
+                        <span>{food.name}</span>
+                        <span className={food.status === 'Critical' ? 'text-fifa-red animate-pulse' : food.status === 'High' ? 'text-fifa-gold' : 'text-fifa-teal'}>
+                          {food.minutes}m ({food.status})
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${
+                          food.status === 'Critical' ? 'bg-fifa-red' : food.status === 'High' ? 'bg-fifa-gold' : 'bg-fifa-teal'
+                        }`} style={{ width: `${Math.min(100, (food.minutes / 20) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </GlassCard>
         </div>
